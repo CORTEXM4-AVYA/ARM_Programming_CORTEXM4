@@ -1,0 +1,36 @@
+#include<stdint.h>
+#include<stdbool.h>
+#include"inc/hw_memmap.h"
+#include"inc/hw_types.h"
+#include"driverlib/gpio.h"
+#include"driverlib/pin_map.h"
+#include"driverlib/sysctl.h"
+#include"driverlib/uart.h"
+#include"driverlib/adc.h"
+uint32_t read;
+
+int main(void)
+{
+    SysCtlClockSet(SYSCTL_SYSDIV_5|SYSCTL_USE_PLL|SYSCTL_OSC_MAIN|SYSCTL_XTAL_16MHZ);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);//ENABLE AIN0 OF ADC0 MODULE
+   // GPIOPinTypeGPIOInput(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3)
+    GPIOPinTypeADC(GPIO_PORTE_BASE,GPIO_PIN_3);
+    ADCSequenceConfigure(ADC0_BASE, 1, ADC_TRIGGER_PROCESSOR, 0);
+    ADCSequenceStepConfigure(ADC0_BASE, 1, 0, ADC_CTL_CH0|ADC_CTL_IE);
+    ADCSequenceEnable(ADC0_BASE, 1);
+    while(1)
+    {
+
+        //Clear the ADC interrupt flag
+        ADCIntClear(ADC0_BASE, 1);
+        //Trigger the ADC module
+        ADCProcessorTrigger(ADC0_BASE, 1);
+        //Poll for the raw interrupt status
+
+
+       while(!ADCIntStatus(ADC0_BASE,1, false));
+
+        ADCSequenceDataGet(ADC0_BASE, 1, &read);
+    }
+}
