@@ -1,0 +1,175 @@
+
+
+/**
+ * main.c
+ */
+#include<stdint.h>
+#include<string.h>
+#include<stdbool.h>
+#include"inc/hw_types.h"
+#include"inc/hw_memmap.h"
+#include"driverlib/sysctl.h"
+#include"driverlib/gpio.h"
+
+void LCDInit(void);
+void LCDSendCmd(char Cmd);
+void LCDSendData(char data);
+
+int i;
+char ch,ch1;
+
+void main(void)
+{
+    SysCtlClockSet(SYSCTL_SYSDIV_5|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
+    LCDInit();
+    //first line begin
+    LCDSendCmd(0x80);
+
+    // Sending "Happy" string on LCD
+    char data[] = "Happy";
+    LCDInit();
+    ch = data[0];         //this is used so that 'ch' could be used to check condition
+    for(i=0;ch!='\0';i++)
+   {
+        ch = data[i];
+        if(ch!='\0')
+        LCDSendData(data[i]);
+   }
+
+    //stored and send Custom character to CGRAM
+    LCDSendCmd(0x40);
+
+    LCDSendData(0x00);//VELANTI
+    LCDSendData(0x00);
+    LCDSendData(0x00);
+    LCDSendData(0x00);
+    LCDSendData(0x00);
+    LCDSendData(0x04);
+    LCDSendData(0x0A);
+    LCDSendData(0x11);
+    //LCDSendCmd(0x80);
+
+
+
+    LCDSendCmd(0x48);//Di
+    LCDSendData(0x1F);
+    LCDSendData(0x12);
+    LCDSendData(0x14);
+    LCDSendData(0x15);
+    LCDSendData(0x13);
+    LCDSendData(0x11);
+    LCDSendData(0x11);
+    LCDSendData(0x12);
+    //LCDSendData(0xC0);
+
+
+   // LCDSendCmd(0x06);//cursor shift
+
+        LCDSendCmd(0x50);//va
+        LCDSendData(0x1F);
+        LCDSendData(0x5);
+        LCDSendData(0xD);
+        LCDSendData(0x15);
+        LCDSendData(0xD);
+        LCDSendData(0x5);
+        LCDSendData(0x5);
+        LCDSendData(0x0);
+
+
+        LCDSendCmd(0x58);//la..bal
+          LCDSendData(0x1F);
+                LCDSendData(0x1);
+                LCDSendData(0x1);
+                LCDSendData(0x1F);
+                LCDSendData(0x15);
+                LCDSendData(0x1F);
+                LCDSendData(0x0);
+                LCDSendData(0x0);
+
+        LCDSendCmd(0x60);//   |
+               LCDSendData(0x10);
+               LCDSendData(0x10);
+               LCDSendData(0x10);
+               LCDSendData(0x10);
+               LCDSendData(0x10);
+               LCDSendData(0x10);
+               LCDSendData(0x0);
+               LCDSendData(0x0);
+
+
+    //Start displaying data
+   LCDSendCmd(0x87);
+   LCDSendData(0x00);
+   LCDSendCmd(0xC7);
+   LCDSendData(0x01);
+   LCDSendData(0x02);
+   LCDSendData(0x03);
+   LCDSendData(0x04);
+
+   LCDSendCmd(0x89);
+   LCDSendData(0x00);
+
+   LCDSendCmd(0x06);//cursor shift
+   LCDSendCmd(0x06);//cursor shift
+   LCDSendCmd(0x06);//cursor shift
+   LCDSendCmd(0x06);//cursor shift
+
+   char data1[] = "mam";
+
+       ch1 = data1[0];         //this is used so that 'ch' could be used to check condition
+        for(i=0;ch1!='\0';i++)
+      {
+           ch1 = data1[i];
+           if(ch1!='\0')
+           LCDSendData(data1[i]);
+      }
+   //   GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_4,GPIO_PIN_4);  // used to provide VDD to Anode of Backlight
+
+    while(1)
+    {
+
+    }
+}
+void LCDInit(void)
+{
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+
+    GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE,GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);
+    GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);
+    GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3);
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_6,0x0);
+    SysCtlDelay(1250);
+
+    LCDSendCmd(0x38);
+    LCDSendCmd(0x0F);
+    LCDSendCmd(0x06);
+    LCDSendCmd(0x01);
+}
+
+void LCDSendCmd(char Cmd)
+{
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_5,0x0);
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,(0x0F&Cmd));
+    GPIOPinWrite(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,(0xF0&Cmd));
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,GPIO_PIN_7);
+    SysCtlDelay(7500);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,0x0);
+    SysCtlDelay(7500);
+}
+void LCDSendData(char data)
+{
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_5,GPIO_PIN_5);
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,(0x0F&data));
+    GPIOPinWrite(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,(0xF0&data));
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,GPIO_PIN_7);
+    SysCtlDelay(7500);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,0x0);
+    SysCtlDelay(7500);
+}

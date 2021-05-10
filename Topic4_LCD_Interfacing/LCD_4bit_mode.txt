@@ -1,0 +1,99 @@
+#include<stdint.h>
+#include<stdbool.h>
+#include"inc/hw_types.h"
+#include"inc/hw_memmap.h"
+#include"driverlib/sysctl.h"
+#include"driverlib/gpio.h"
+
+
+
+void LCDInit(void);
+void LCDSendCmd(char Cmd);
+void LCDSendData(char data);
+void LCD_String_Display(unsigned char *str);
+void clear(void);
+
+void main()
+{
+    SysCtlClockSet(SYSCTL_SYSDIV_5|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+
+    GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE,GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);
+    GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);
+
+    SysCtlDelay(3750);
+    LCDInit();
+    clear();
+    LCDSendCmd(0xC0);
+}
+
+void LCDInit(void)
+{
+
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_6,0x0);
+    SysCtlDelay(1250);
+
+    LCDSendCmd(0x28);
+    LCDSendCmd(0x0F);
+    LCDSendCmd(0x06);
+    LCDSendCmd(0x01);
+}
+
+void LCDSendCmd(char Cmd)
+{
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_5,0x0);
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTB_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,(0xF0&Cmd));
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,GPIO_PIN_7);
+    SysCtlDelay(7500);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,0x0);
+    SysCtlDelay(7500);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_5,0x0);
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTB_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,(0xF0&Cmd<<4));
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,GPIO_PIN_7);
+    SysCtlDelay(7500);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,0x0);
+    SysCtlDelay(7500);
+}
+void LCDSendData(char data)
+{
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_5,GPIO_PIN_5);
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTB_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,(0xF0&data));
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,GPIO_PIN_7);
+    SysCtlDelay(7500);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,0x0);
+    SysCtlDelay(7500);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_5,GPIO_PIN_5);
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTB_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,(0XF0&data<<4));
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,GPIO_PIN_7);
+    SysCtlDelay(7500);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,0x0);
+
+    SysCtlDelay(7500);
+}
+
+void LCD_String_Display(unsigned char *str)
+{
+
+ while(*str!='\0')
+
+ {
+     LCDSendData(*str);
+     str++;
+ }
+
+}
+void clear (void)
+{
+    LCDSendCmd(0x01);
+    SysCtlDelay(3750);
+}
