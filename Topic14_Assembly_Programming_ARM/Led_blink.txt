@@ -1,0 +1,68 @@
+SYSCTL_RCGCGPIO_R:			.word 0x400FE608
+GPIO_PORTF_DIR_R: 			.word 0x40025400
+GPIO_PORTF_DEN_R: 			.word 0x4002551C
+GPIO_PORTF_DATA_R:			.word 0x400253FC
+
+
+delay_count:                .word 1066666
+
+	.global main
+
+	.data
+
+	;put your variables here
+
+
+
+	.thumb	   ; use thumb, UAL syntax
+
+	.text
+     ; set memory location to flash
+main:
+	  bl GPIOF_init
+
+loop: bl LIGHT_ON_OFF
+      ldr R0, delay_count
+      bl delay
+          ;bl LIGHT_OFF
+
+          b loop
+
+
+GPIOF_init:
+     ldr R1, SYSCTL_RCGCGPIO_R
+     ldr R0,[R1]
+     orr R0,R0,#0X20
+     str R0,[R1]
+
+     ldr R1, GPIO_PORTF_DIR_R
+     mov R0,#0X0E
+     str R0,[R1]
+
+     ldr R1, GPIO_PORTF_DEN_R
+     mov R0,#0X0E
+     str R0,[R1]
+     bx lr
+
+delay:
+     subs R0,R0, #1
+     bne delay
+     bx lr
+LIGHT_ON_OFF:
+
+	 ldr R1, GPIO_PORTF_DATA_R
+     mov R0,#0X02
+     str R0,[R1]
+     ldr R0, delay_count
+     bl delay
+
+     mov R0,#0X04
+     str R0,[R1]
+     ldr R0, delay_count
+     bl delay
+
+     b LIGHT_ON_OFF
+
+
+
+.end

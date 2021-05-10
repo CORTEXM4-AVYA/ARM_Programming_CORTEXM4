@@ -1,0 +1,117 @@
+SYSCTL_RCGCGPIO_R:			.word 0x400FE608
+GPIO_PORTF_DIR_R: 			.word 0x40025400
+GPIO_PORTF_DEN_R: 			.word 0x4002551C
+GPIO_PORTF_DATA_R:			.word 0x400253FC
+
+GPIO_PORTF_PUR_R: 			.word 0x40025510
+GPIO_PORTF_LOCK_R: 			.word 0x40025520
+GPIO_PORTF_CR_R: 			.word 0x40025524
+GPIO_LOCK_KEY: 			    .word 0x4C4F434B
+
+RED:						.word 0x02
+
+delay_count:                .word 1066666
+
+	.global main
+
+	.data
+
+	;put your variables here
+
+
+
+	.thumb	   ; use thumb, UAL syntax
+
+	.text
+     ; set memory location to flash
+    .align
+main:
+	  bl GPIOF_init
+
+loop:
+      ldr R0, delay_count
+      bl delay
+      bl switch_check
+      cmp R0,#0x00
+      beq switch_on
+      bne switch_off
+      b loop
+
+switch_on:
+  bl LIGHT_ON
+  ldr R0, delay_count
+  bl delay
+  bl loop
+
+switch_off:
+  bl LIGHT_OFF
+  ldr R0, delay_count
+  bl delay
+  bl loop
+
+led_on:
+  ldr R1,GPIO_PORTF_DATA_R
+  str R0,[R1]
+  ldr R0, delay_count
+  bl delay
+  mov R0, #0x00
+  str R0,[R1]
+  ldr R0, delay_count
+  bl delay
+
+  bx lr
+switch_check:
+	ldr R1, GPIO_PORTF_DATA_R
+	ldr R0,[R1]
+    AND R0,R0,#0x11
+    bx lr
+
+LIGHT_ON:
+	 ldr R1, GPIO_PORTF_DATA_R
+     mov R0,#0X02
+     str R0,[R1]
+     bx lr
+
+LIGHT_OFF:
+	ldr R1, GPIO_PORTF_DATA_R
+    mov R0,#0X00
+    str R0,[R1]
+    bx lr
+
+GPIOF_init:
+     ldr R1, SYSCTL_RCGCGPIO_R
+     ldr R0,[R1]
+     orr R0,R0,#0X20
+     str R0,[R1]
+
+     ldr R1, GPIO_PORTF_DIR_R
+     mov R0,#0X02
+     str R0,[R1]
+
+     ldr R1, GPIO_PORTF_DEN_R
+     mov R0,#0X12
+     str R0,[R1]
+
+
+     ldr R1, GPIO_PORTF_PUR_R
+     mov R0,#0X10
+     str R0,[R1]
+
+     ldr R1, GPIO_PORTF_LOCK_R
+     ldr R0, GPIO_LOCK_KEY
+     str R0,[R1]
+
+
+     ldr R1, GPIO_PORTF_CR_R
+     mov R0,#0XFF
+     str R0,[R1]
+     bx lr
+delay:
+     subs R0,R0, #1
+     bne delay
+     bx lr
+
+
+
+
+.end
