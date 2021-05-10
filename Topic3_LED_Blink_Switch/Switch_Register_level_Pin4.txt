@@ -1,0 +1,20 @@
+#include<stdint.h>
+#include"inc/tm4c123gh6pm.h"
+void delay();
+int main()
+{
+    unsigned int value;
+    SYSCTL_RCGC2_R |=0X00000020;
+    GPIO_PORTF_DIR_R=0X08;
+    GPIO_PORTF_DEN_R=0X18;
+    GPIO_PORTF_PUR_R=0X10;
+    while(1)
+        {
+        value=GPIO_PORTF_DATA_R;
+        value=~value;
+        value=value>>1;
+        GPIO_PORTF_DATA_R=value;
+
+
+         }
+}
