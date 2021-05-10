@@ -1,0 +1,33 @@
+#include<stdint.h>
+#include<stdbool.h>
+#include "inc/tm4c123gh6pm.h"
+
+volatile uint32_t delay=0;
+void GPIOF_Handler(void);
+int main(void){
+    SYSCTL_RCGCGPIO_R |= 0x00000020;
+    GPIO_PORTF_LOCK_R=0x4C4F434B;//unlock PORTF and configure for blue LED
+    GPIO_PORTF_CR_R=0x1F;
+    GPIO_PORTF_DIR_R|=0x04;
+    GPIO_PORTF_DEN_R|= (1<<2);
+    GPIO_PORTF_DATA_R|= (1<<2);
+    GPIO_PORTF_DIR_R&= ~(1<<4);//PF4 INITIALIZATION
+    GPIO_PORTF_DEN_R|=(1<<4);
+    GPIO_PORTF_PUR_R|= (1<<4);
+    GPIO_PORTF_IS_R&= ~(1<<4); // Make PF4 edge sensitive
+    GPIO_PORTF_IBE_R&= ~(1<<4);// Use this register in conjunction with IEV
+    GPIO_PORTF_IEV_R &=~(1<<4); // Make PF4 rising edge triggered
+    GPIO_PORTF_ICR_R|= (1<<4); // Clear any previous interrupt at PF4
+    GPIO_PORTF_IM_R |= (1<<4);  // unmask the interrupt for PF4
+    NVIC_PRI7_R=(NVIC_PRI7_R&0xFF00FFFF)|0x00600000; // Assign priority as 3
+    NVIC_EN0_R=0x40000000;  // Enable interrupt for IRQ 30
+
+    while(1){
+    }
+}
+
+
+void GPIOF_Handler(void){
+    GPIO_PORTF_ICR_R|= (1<<4);
+    GPIO_PORTF_DATA_R^= (1<<2);
+}
