@@ -1,0 +1,79 @@
+
+
+
+#include <stdint.h>
+#include <stdbool.h>
+#include "inc/hw_memmap.h"
+#include "inc/hw_types.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/gpio.h"
+#include "driverlib/debug.h"
+#include "driverlib/pwm.h"
+#include "driverlib/pin_map.h"
+#include "inc/hw_gpio.h"
+#include "driverlib/rom.h"
+#define PWM_BASE_FREQ 100 //Hz
+
+int main(void)
+{
+    uint32_t val_load, pwm_clk;
+    uint16_t duty = 1;
+    uint8_t up=1, down=0;
+    uint16_t i = 0;
+
+    SysCtlClockSet(SYSCTL_SYSDIV_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ); //set sys clock to 80 MHz
+    SysCtlPWMClockSet(SYSCTL_PWMDIV_64);    //set pwm clock
+
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM0); //enable pwm1 module
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);    //enable gpioF module
+
+    //GPIODirModeSet(GPIO_PORTB_BASE, GPIO_PIN_6|GPIO_PIN_7, GPIO_DIR_MODE_OUT);
+    //GPIOPinTypePWM(GPIO_PORTF_BASE, GPIO_PIN_3);    //set pf3 to pwm out
+    GPIOPinTypePWM(GPIO_PORTB_BASE, GPIO_PIN_6);
+    GPIOPinTypePWM(GPIO_PORTB_BASE, GPIO_PIN_7);
+   GPIOPinTypePWM(GPIO_PORTB_BASE, GPIO_PIN_4);
+    //set pf2 to pwm out
+   // GPIOPinConfigure(GPIO_PF3_M1PWM7);
+    GPIOPinConfigure(GPIO_PB6_M0PWM0);
+    GPIOPinConfigure(GPIO_PB7_M0PWM1);
+    GPIOPinConfigure(GPIO_PB4_M0PWM2);
+
+
+    pwm_clk = SysCtlClockGet() / 64;
+    val_load = (pwm_clk / PWM_BASE_FREQ) - 1;   //counter value for pwm freq
+    PWMGenConfigure(PWM0_BASE, PWM_GEN_0, PWM_GEN_MODE_DOWN);   //config module for count dowm mode
+    PWMGenPeriodSet(PWM0_BASE, PWM_GEN_0, val_load);    //load the counter
+    PWMGenConfigure(PWM0_BASE, PWM_GEN_1, PWM_GEN_MODE_DOWN);   //config module for count dowm mode
+    PWMGenPeriodSet(PWM0_BASE, PWM_GEN_1, val_load);
+
+    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_6, duty*val_load/100);  //set width for pf2
+    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_7, duty*val_load/100);
+    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, duty*val_load/100);
+  //  PWMPulseWidthSet(PWM1_BASE, PWM_OUT_7, duty*val_load/100);  //set width for pf3
+    PWMOutputState(PWM0_BASE, PWM_OUT_6_BIT | PWM_OUT_7_BIT , true); //enable output
+    PWMGenEnable(PWM0_BASE, PWM_GEN_0); //enable pwm generator
+   PWMGenEnable(PWM0_BASE, PWM_GEN_1);
+
+    while(1)
+    {
+        PWMPulseWidthSet(PWM0_BASE, PWM_OUT_6, duty*val_load/100);
+        PWMPulseWidthSet(PWM0_BASE, PWM_OUT_7, duty*val_load/100);
+        PWMPulseWidthSet(PWM0_BASE, PWM_OUT_4, duty*val_load/100);
+       // PWMPulseWidthSet(PWM1_BASE, PWM_OUT_7, duty*val_load/100);
+        if (duty == 100)
+        {
+            down = 1;
+            up = 0;
+        }
+        if (duty == 1)
+        {
+            up = 1;
+            down = 0;
+        }
+        if (up)
+            duty += 1;
+        if (down)
+            duty -= 1;
+        for(i = 0; i< 40000; i++);
+    }
+}
