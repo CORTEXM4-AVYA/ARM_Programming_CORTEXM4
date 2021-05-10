@@ -1,0 +1,42 @@
+
+#include<stdint.h>
+#include<stdbool.h>
+#include "inc/tm4c123gh6pm.h"
+
+
+
+volatile uint32_t Counts=0;
+void SysTick_Init(uint32_t period){
+
+  NVIC_ST_CTRL_R = 0;         // disable SysTick during setup
+  NVIC_ST_RELOAD_R = period-1;// reload value
+  NVIC_ST_CURRENT_R = 0;      // any write to current clears it
+  NVIC_SYS_PRI3_R = (NVIC_SYS_PRI3_R&0x00FFFFFF)|0x40000000; // priority 2
+  NVIC_ST_CTRL_R = 0x07; // enable SysTick with core clock and interrupts
+
+  // enable interrupts after all initialization is finished
+
+}
+
+void SysTick_Handler(void){
+
+
+
+  GPIO_PORTF_DATA_R ^= (1<<2);// toggle PF2
+
+
+}
+
+int main(void){ // running at 16 MHz
+  SYSCTL_RCGCGPIO_R |= 0x00000020; // activate port F
+
+  GPIO_PORTF_DIR_R |= (1<<2);   // make PF2 output (PF2 built-in LED)
+  GPIO_PORTF_DEN_R |=(1<<2);
+  GPIO_PORTF_DATA_R|= (1<<2);
+  // enable digital I/O on PF2
+  SysTick_Init(1600000);        // initialize SysTick timer, every 1ms
+  //EnableInterrupts();      // enable after everything initialized
+  while(1){                   // interrupts every 1ms, 500 Hz flash
+    //WaitForInterrupt();
+  }
+}

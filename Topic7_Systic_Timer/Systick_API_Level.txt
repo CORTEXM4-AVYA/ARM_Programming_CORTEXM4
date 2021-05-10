@@ -1,0 +1,49 @@
+//CRO_Systick
+
+/**
+ * main.c
+ */
+#include<stdint.h>
+#include<stdbool.h>
+#include"inc/hw_types.h"
+#include"inc/hw_nvic.h"
+#include"inc/hw_memmap.h"
+#include"driverlib/sysctl.h"
+#include"driverlib/systick.h"
+#include"driverlib/gpio.h"
+#include "driverlib/interrupt.h"
+#define SystemCoreClock1 25000000
+//#define SystemCoreClock 2500;
+void delayxyz()
+{
+   // int i ;
+SysTickDisable();
+//SysTickPeriodSet ((SystemCoreClock/100));
+SysTickPeriodSet(SystemCoreClock1/10);
+HWREG (NVIC_ST_CURRENT)=0;
+SysTickEnable();
+
+while((HWREG(NVIC_ST_CTRL) & NVIC_ST_CTRL_COUNT)==0)
+HWREG (NVIC_ST_CURRENT)=0;
+
+SysTickDisable();
+}
+int main(void)
+{
+
+        SysCtlClockSet(SYSCTL_SYSDIV_5|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
+        SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+        GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3);
+
+        while(1)
+        {
+        GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x08);
+        delayxyz();
+       // GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x04);
+       // delayxyz();
+        GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x00);
+        delayxyz();
+
+}
+
+}
