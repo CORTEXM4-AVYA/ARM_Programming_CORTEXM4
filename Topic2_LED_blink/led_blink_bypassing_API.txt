@@ -1,0 +1,50 @@
+#include<stdint.h>
+#include<stdbool.h>
+#include"inc/hw_types.h"
+#include"inc/hw_memmap.h"
+#include"driverlib/sysctl.h"
+#include"driverlib/gpio.h"
+void lDelay(volatile long );
+extern void sDelay(long);
+#define GPIODIR (*(volatile unsigned long *)(0x40025400))
+#define GPIODEN (*(volatile unsigned long *)(0x4002551C))
+#define GPIOFDATA_1_2 (*(volatile unsigned long *)(0x40025018))
+#define GPIOFDATA_1_3 (*(volatile unsigned long *)(0x40025038))
+#define GPIOFDATA_1_4 (*(volatile unsigned long *)(0x40025000))
+uint8_t color=0x0A;
+uint8_t color1=0x0C;
+int main(void)
+
+{
+    SysCtlClockSet(SYSCTL_SYSDIV_5|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+    //GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3);
+    //GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x04);
+    lDelay(10000000);
+    //sDelay(10000000);
+    GPIODIR= 0x0E;
+    GPIODEN = 0x0E;
+
+    //GPIOFDATA_1_3=color;
+    //lDelay(1000000);
+
+    while(1){
+        GPIOFDATA_1_2=color;
+          SysCtlDelay(10000000);
+          GPIOFDATA_1_2=color1;
+          SysCtlDelay(10000000);
+
+    }
+    //return 0;
+}
+void lDelay(volatile long cnt)
+{
+
+    while(cnt!=0){
+        cnt--;
+    }
+
+
+
+
+}
