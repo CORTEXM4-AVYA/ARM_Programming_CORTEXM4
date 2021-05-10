@@ -1,0 +1,358 @@
+
+#include<stdint.h>
+#include<stdbool.h>
+#include"inc/hw_types.h"
+#include"inc/hw_memmap.h"
+#include"driverlib/sysctl.h"
+#include"driverlib/gpio.h"
+#include "driverlib/uart.h"
+#include "driverlib/i2c.h"
+#include "inc/tm4c123gh6pm.h"
+#include "inc/hw_i2c.h"
+#include "inc/hw_gpio.h"
+#include "driverlib/pin_map.h"
+
+#define SLAVE_ADDRESS 0x68  //Address of DS3231
+
+//Function init
+void initI2C();
+unsigned char dec2bcd(unsigned char val);
+unsigned char bcd2dec(unsigned char val);
+void LCDInit(void);
+void LCDSendCmd(char Cmd);
+void LCDSendData(char data);
+void LCD_String_Display(unsigned char *str);
+void clear(void);
+
+//***SET TIME HERE BY PUTTIG VALUES IN APPROPRIATE VARIABLES ******//
+unsigned long sec=00 , min = 27 ,hour = 05;
+unsigned long tsec, tmin, thour,DOW;
+unsigned long day=1 , date=29 , month=6  , year=20 ;
+unsigned long tdate, tmonth, tyear,tday;
+unsigned long lsec, lmin, lhour, ldate, lday, lmonth, lyear;
+
+void LCDInit(void);
+void LCDSendCmd(char Cmd);
+void LCDSendData(char data);
+void LCD_String_Display(unsigned char *str);
+void clear(void);
+char ch;
+int i,t;
+unsigned char Last_Value = 1;
+//Error routine
+
+#ifdef DEBUG
+void
+__error__(char *pcFilename, uint32_t ui32Line)
+{
+}
+#endif
+
+//LCD PART
+void LCDInit(void)
+{
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+
+    GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE,GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);
+    GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);
+    GPIOPinTypeGPIOOutput(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3);
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_6,0x0);
+    SysCtlDelay(1250);
+
+    LCDSendCmd(0x38);
+    LCDSendCmd(0x0F);
+    LCDSendCmd(0x06);
+    LCDSendCmd(0x01);
+}
+
+void LCDSendCmd(char Cmd)
+{
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_5,0x0);
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,(0x0F&Cmd));
+    GPIOPinWrite(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,(0xF0&Cmd));
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,GPIO_PIN_7);
+    SysCtlDelay(7500);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,0x0);
+    SysCtlDelay(7500);
+}
+
+void LCDSendData(char data)
+{
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_5,GPIO_PIN_5);
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,(0x0F&data));
+    GPIOPinWrite(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,(0xF0&data));
+    SysCtlDelay(3750);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,GPIO_PIN_7);
+    SysCtlDelay(7500);
+    GPIOPinWrite(GPIO_PORTA_BASE,GPIO_PIN_7,0x0);
+    SysCtlDelay(7500);
+}
+
+void LCD_String_Display(unsigned char *str)
+{
+
+ while(*str)
+
+ {
+     LCDSendData(*str);
+     str++;
+ }
+return;
+
+}
+void clear (void)
+{
+    LCDSendCmd(0x01);
+    SysCtlDelay(30000);
+}
+//concert binary to bcd and vice versa
+unsigned char dec2bcd(unsigned char val)
+{
+    return ((val/0xA*0x10)+(val%0xA));
+}
+unsigned char bcd2dec(unsigned char val)
+{
+    return ((val/0x10*0xA)+(val%0x10));
+}
+
+ //I2C PART
+void initI2C()
+{
+    SysCtlPeripheralReset(SYSCTL_PERIPH_I2C0);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_I2C0);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+    GPIOPinTypeI2CSCL(GPIO_PORTB_BASE, GPIO_PIN_2);
+    GPIOPinTypeI2C(GPIO_PORTB_BASE, GPIO_PIN_3);
+    GPIOPinConfigure(GPIO_PB2_I2C0SCL);
+    GPIOPinConfigure(GPIO_PB3_I2C0SDA);
+    I2CMasterInitExpClk(I2C0_BASE, SysCtlClockGet(), false);
+    SysCtlDelay(3000);
+}
+
+//MAIN FUNCTION
+int main()
+{
+    SysCtlClockSet (SYSCTL_SYSDIV_5|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
+    SysCtlDelay(3000);
+    LCDInit();
+    clear();
+    SysCtlDelay(3000);
+    LCDInit();
+    clear();
+    initI2C();
+    clear();
+    GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_5|GPIO_PIN_7,0x00);
+    while (1)
+        {
+            while(t==0)
+            {       //SENDING  INFO TO DS3231 TO SET RTC
+                    I2CMasterSlaveAddrSet(I2C0_BASE, SLAVE_ADDRESS, false);
+                    I2CMasterDataPut(I2C0_BASE,0);
+                    //I2CMasterSlaveAddrSet(I2C0_BASE, SLAVE_ADDRESS, false);
+                    //I2CMasterDataPut(I2C0_BASE,0);
+                    I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_START);
+                    while(I2CMasterBusy(I2C0_BASE));
+
+                    SysCtlDelay(3000);
+                    I2CMasterDataPut(I2C0_BASE,dec2bcd(sec));
+                    I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_CONT);
+                    while(I2CMasterBusy(I2C0_BASE));
+
+                    SysCtlDelay(3000);
+                    I2CMasterDataPut(I2C0_BASE,dec2bcd(min));
+                    I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_CONT);
+                    while(I2CMasterBusy(I2C0_BASE));
+
+                    SysCtlDelay(3000);
+                    I2CMasterDataPut(I2C0_BASE,dec2bcd(hour));
+                    I2CMasterControl(I2C0_BASE,I2C_MASTER_CMD_BURST_SEND_CONT);
+                    while(I2CMasterBusy(I2C0_BASE));
+
+                    SysCtlDelay(3000);
+                    I2CMasterDataPut(I2C0_BASE,dec2bcd(day));
+                    I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_CONT);
+                    while(I2CMasterBusy(I2C0_BASE));
+
+                    SysCtlDelay(3000);
+                    I2CMasterDataPut(I2C0_BASE,dec2bcd(date));
+                    I2CMasterControl(I2C0_BASE,I2C_MASTER_CMD_BURST_SEND_CONT);
+                    while(I2CMasterBusy(I2C0_BASE));
+
+                    SysCtlDelay(3000);
+                    I2CMasterDataPut(I2C0_BASE,dec2bcd(month));
+                    I2CMasterControl(I2C0_BASE,I2C_MASTER_CMD_BURST_SEND_CONT);
+                    while(I2CMasterBusy(I2C0_BASE));
+
+                    SysCtlDelay(3000);
+                    I2CMasterDataPut(I2C0_BASE,dec2bcd(year));
+                    I2CMasterControl(I2C0_BASE,I2C_MASTER_CMD_BURST_SEND_FINISH);
+                    while(I2CMasterBusy(I2C0_BASE));
+                    SysCtlDelay(3000);
+                    t=1;
+                }
+                  //Reading from RTC MODULE -CURRENT DATE&TIME-SLAVE TO MASTER
+                   I2CMasterSlaveAddrSet(I2C0_BASE, SLAVE_ADDRESS, false);
+                   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_START);
+                   while(I2CMasterBusy(I2C0_BASE));
+                   SysCtlDelay(3000);
+                   I2CMasterDataPut(I2C0_BASE,0x00);
+                   while(I2CMasterBusy(I2C0_BASE));
+                   SysCtlDelay(3000);
+                   I2CMasterSlaveAddrSet(I2C0_BASE, SLAVE_ADDRESS, true);
+                   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_START);
+                   while(I2CMasterBusy(I2C0_BASE));
+                   SysCtlDelay(3000);
+                   sec = I2CMasterDataGet(I2C0_BASE);
+                   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
+                   while(I2CMasterBusy(I2C0_BASE));
+                   SysCtlDelay(3000);
+                   min = I2CMasterDataGet(I2C0_BASE);
+                   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
+                   while(I2CMasterBusy(I2C0_BASE));
+                   SysCtlDelay(3000);
+                   hour = I2CMasterDataGet(I2C0_BASE);
+                   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
+                   while(I2CMasterBusy(I2C0_BASE));
+                   SysCtlDelay(3000);
+                   day = I2CMasterDataGet(I2C0_BASE);
+                   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
+                   while(I2CMasterBusy(I2C0_BASE));
+                   date = I2CMasterDataGet(I2C0_BASE);
+                   SysCtlDelay(3000);
+                   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
+                   while(I2CMasterBusy(I2C0_BASE));
+                   SysCtlDelay(3000);
+                   month = I2CMasterDataGet(I2C0_BASE);
+                   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
+                   while(I2CMasterBusy(I2C0_BASE));
+                   SysCtlDelay(3000);
+                   year = I2CMasterDataGet(I2C0_BASE);
+                   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
+                   while(I2CMasterBusy(I2C0_BASE));
+                   SysCtlDelay(3000);
+
+                   //Convert received BCD data To decimal
+                   tsec = bcd2dec(sec)&0x7f;
+                   tmin = bcd2dec(min);
+                   thour = bcd2dec(hour)&0x3f;
+                   tday = bcd2dec(day);
+                   tdate = bcd2dec(date);
+                   tmonth = bcd2dec(month);
+                   tyear = bcd2dec(year);
+                   DOW = tday;
+                   if(Last_Value != tsec)
+                       {
+                        clear();
+                        if (thour<= 23)
+                        {
+                            lhour = ((thour/0xA) | 0x30);
+                            LCDSendData(lhour);
+                            lhour = ((thour % 0xA) | 0x30);
+                            LCDSendData(lhour);
+                        }
+                        else
+                        {
+                            thour = 0;
+                            lhour = ((thour/0xA) | 0x30);
+                            LCDSendData(lhour);
+                            lhour = ((thour % 0xA) | 0x30);
+                            LCDSendData(lhour);
+                        }
+
+                        LCDSendData(58);
+                        if (tmin<=59)
+                        {
+                            lmin = ((tmin/0xA) | 0x30);
+                            LCDSendData(lmin);
+                            lmin = ((tmin % 0xA) | 0x30);
+                            LCDSendData(lmin);
+                        }
+                        else
+                        {
+                            tmin = 0;
+                            lmin = ((tmin/0xA) | 0x30);
+                            LCDSendData(lmin);
+                            lmin = ((tmin % 0xA) | 0x30);
+                            LCDSendData(lmin);
+                        }
+                        LCDSendData(58);
+                        if (tsec<=59)
+                        {
+                            lsec = ((tsec/0xA) | 0x30);
+                            LCDSendData(lsec);
+                            lsec = ((tsec % 0xA) | 0x30);
+                            LCDSendData(lsec);
+                        }
+
+                        else
+                        {
+                            tsec=0;
+                            lsec = ((tsec/0xA) | 0x30);
+                            LCDSendData(lsec);
+                            lsec = ((tsec % 0xA) | 0x30);
+                            LCDSendData(lsec);
+                        }
+                        LCDSendCmd(0xC0);
+                        ldate = ((tdate/0xA) | 0x30);
+                        LCDSendData(ldate);
+                        ldate = ((tdate % 0xA) | 0x30);
+                        LCDSendData(ldate);
+                        LCDSendData(47);
+                        lmonth = ((tmonth/0xA) | 0x30);
+                        LCDSendData(lmonth);
+                        lmonth = ((tmonth % 0xA) | 0x30);
+                        LCDSendData(lmonth);
+                        LCDSendData(47);
+                        lyear = ((tyear/0xA) | 0x30);
+                        LCDSendData(lyear);
+                        lyear = ((tyear % 0xA) | 0x30);
+                        LCDSendData(lyear);
+                        LCDSendData(32);
+                        switch(DOW)
+                              {
+                              case 1:
+                                  LCD_String_Display("Sun");
+                                       break;
+
+                              case 2:
+                                  LCD_String_Display("Mon");
+                                       break;
+
+                              case 3:
+                                  LCD_String_Display("Tue");
+                                      break;
+
+                              case 4:
+                                  LCD_String_Display("Wed");
+                                      break;
+
+                              case 5:
+                                  LCD_String_Display("Thu");
+                                      break;
+
+                              case 6:
+                                  LCD_String_Display("Fri");
+                                      break;
+
+                              case 7:
+                                 LCD_String_Display("Sat");
+                                      break;
+
+                              }
+
+                Last_Value = tsec;
+                tsec = 0;
+            }
+                else
+                    {
+                           I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
+                    }
+
+            }
+    }
