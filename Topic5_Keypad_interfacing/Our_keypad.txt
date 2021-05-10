@@ -1,0 +1,228 @@
+#include<stdint.h>
+#include<stdbool.h>
+#include"inc/hw_types.h"
+#include"inc/hw_memmap.h"
+#include"driverlib/sysctl.h"
+#include"driverlib/gpio.h"
+
+
+/***
+void LCDInit(void);
+void LCDSendCmd(char Cmd);
+void LCDSendData(char data);
+void LCD_String_Display(unsigned char *str);
+void clear(void);
+***/
+
+void main()
+{
+    SysCtlClockSet(SYSCTL_SYSDIV_5|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+   // SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+   // SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+
+    //GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE,GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);
+   // GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);
+
+
+
+    GPIOPinTypeGPIOInput(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3);//column
+    GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);//row
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3);//LED
+
+    GPIOPadConfigSet(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_STD_WPU);
+    SysCtlDelay(3750);
+    //LCDInit();
+   // clear();
+    //LCDSendCmd(0xC0);
+
+
+       while(1)
+       {
+              uint8_t row,col;
+
+              GPIOPinWrite(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,0x00);
+              SysCtlDelay(250000);
+              GPIOPinWrite(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0F);
+              SysCtlDelay(250000);
+
+             // if (GPIOPinRead(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3)!=0x0F)
+             // {
+              GPIOPinWrite(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,0xE0);
+              SysCtlDelay(250000);
+
+              row=GPIOPinRead(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7) & 0xF0;
+              col=GPIOPinRead(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3) & 0x0F;
+
+              SysCtlDelay(50000);
+              if(row==0xE0 && col==0x0E)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x02);
+                  SysCtlDelay(1000000);
+              }
+              else if(row==0xE0 && col==0x0D)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x04);
+                  SysCtlDelay(1000000);
+               }
+              else if(row==0xE0 && col==0x0B)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x06);
+                  SysCtlDelay(1000000);
+              }
+
+              else if(row==0xE0 && col==0x07)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x08);
+                  SysCtlDelay(1000000);
+              }
+              else
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+
+              }
+
+              GPIOPinWrite(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,0xD0);
+              SysCtlDelay(250000);
+
+              row=GPIOPinRead(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7) & 0xF0;
+              col=GPIOPinRead(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3) & 0x0F;
+
+              SysCtlDelay(50000);
+              if(row==0xD0 && col==0x0E)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0A);
+                  SysCtlDelay(1000000);
+              }
+              else if(row==0xD0 && col==0x0D)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0C);
+                  SysCtlDelay(1000000);
+               }
+              else if(row==0xD0 && col==0x0B)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0E);
+                  SysCtlDelay(1000000);
+              }
+
+              else if(row==0xD0 && col==0x07)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x02);
+                  SysCtlDelay(1000000);
+              }
+              else
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+
+              }
+
+              GPIOPinWrite(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,0xB0);
+              SysCtlDelay(250000);
+
+              row=GPIOPinRead(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7) & 0xF0;
+              col=GPIOPinRead(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3) & 0x0F;
+
+              SysCtlDelay(50000);
+              if(row==0xB0 && col==0x0E)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x04);
+                  SysCtlDelay(1000000);
+              }
+              else if(row==0xB0 && col==0x0D)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x06);
+                  SysCtlDelay(1000000);
+               }
+              else if(row==0xB0 && col==0x0B)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x08);
+                  SysCtlDelay(1000000);
+              }
+
+              else if(row==0xB0 && col==0x07)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0A);
+                  SysCtlDelay(1000000);
+              }
+              else
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+
+              }
+
+              GPIOPinWrite(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7,0x70);
+              SysCtlDelay(250000);
+
+              row=GPIOPinRead(GPIO_PORTC_BASE,GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7) & 0xF0;
+              col=GPIOPinRead(GPIO_PORTD_BASE,GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3) & 0x0F;
+
+              SysCtlDelay(50000);
+              if(row==0x70 && col==0x0E)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0C);
+                  SysCtlDelay(1000000);
+              }
+              else if(row==0x70 && col==0x0D)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0E);
+                  SysCtlDelay(1000000);
+               }
+              else if(row==0x70 && col==0x0B)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x02);
+                  SysCtlDelay(1000000);
+              }
+
+              else if(row==0x70 && col==0x07)
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x04);
+                  SysCtlDelay(1000000);
+              }
+              else
+              {
+                  GPIOPinWrite(GPIO_PORTF_BASE,GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,0x0);
+                  SysCtlDelay(1000000);
+
+              }
+
+
+}
+
